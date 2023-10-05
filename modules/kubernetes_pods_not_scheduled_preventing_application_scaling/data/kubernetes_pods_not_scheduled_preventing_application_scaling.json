@@ -1,0 +1,106 @@
+{
+  "name": "kubernetes_pods_not_scheduled_preventing_application_scaling",
+  "description": "This incident type occurs when the pods in a Kubernetes cluster fail to schedule, which prevents the application from scaling. Kubernetes is a container orchestration platform that automates the deployment, scaling, and management of containerized applications. Pods in Kubernetes are the smallest deployable units that can be created and managed. When pods do not schedule, it means that the Kubernetes scheduler is unable to find a node with enough resources to run the pod. This can cause issues with application performance and scalability.",
+  "params": [
+    {
+      "name": "NODE_NAME",
+      "value": ""
+    },
+    {
+      "name": "CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "RESOURCE_GROUP_NAME",
+      "value": ""
+    },
+    {
+      "name": "NEW_NODE_COUNT",
+      "value": ""
+    },
+    {
+      "name": "NODE_TYPE",
+      "value": ""
+    },
+    {
+      "name": "POD_NAME",
+      "value": ""
+    },
+    {
+      "name": "NODE_COUNT",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Kubernetes - Pods not scheduled preventing application scaling.\nThis incident type occurs when the pods in a Kubernetes cluster fail to schedule, which prevents the application from scaling. Kubernetes is a container orchestration platform that automates the deployment, scaling, and management of containerized applications. Pods in Kubernetes are the smallest deployable units that can be created and managed. When pods do not schedule, it means that the Kubernetes scheduler is unable to find a node with enough resources to run the pod. This can cause issues with application performance and scalability."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if pods are pending"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "pod | k8s_cluster_name=$K8S_CLUSTER_NAME | app='shoreline' | limit=1 | random=1 | `kubectl get pods --field-selector=status.phase=Pending`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if there are enough resources available to schedule the pod"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "pod | k8s_cluster_name=$K8S_CLUSTER_NAME | app='shoreline' | limit=1 | random=1 | `kubectl describe node ${NODE_NAME} | grep -i capacity`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if there are any taints or affinity rules preventing the pod from being scheduled"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "pod | k8s_cluster_name=$K8S_CLUSTER_NAME | app='shoreline' | random=1 | limit=1 | invoke_node_taints_and_pod_selector($NODE_NAME, $POD_NAME)"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if there are any events related to the pod scheduling failure"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "pod | k8s_cluster_name=$K8S_CLUSTER_NAME | app='shoreline' | limit=1 | random=1 | `kubectl describe pod ${POD_NAME} | grep -i events`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if there are enough resources available on the nodes to schedule the pods. If not, increase the resources on the nodes or provision new nodes by scaling eks cluster, azure cluster and gke cluster as repair"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "pod | k8s_cluster_name=$K8S_CLUSTER_NAME | app='shoreline' | random=1 | limit=1 | invoke_increase_node_resources_or_provision_new_nodes($CLUSTER_NAME, $RESOURCE_GROUP_NAME, $NEW_NODE_COUNT, $NODE_TYPE, $NODE_COUNT)"
+    }
+  ]
+}
